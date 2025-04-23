@@ -1,16 +1,99 @@
 ---
+import Layout from '../layouts/Layout.astro';
+import prisma from '../lib/prisma';
 
+const lists = await prisma.list.findMany({
+  orderBy: { createdAt: 'desc' },
+  include: {
+    _count: {
+      select: { links: true }
+    }
+  }
+});
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<Layout title="Home">
+  <div class="max-w-7xl mx-auto">
+    <div class="sm:flex sm:items-center">
+      <div class="sm:flex-auto">
+        <h1 class="text-3xl font-semibold text-gray-900">Your URL Lists</h1>
+        <p class="mt-2 text-sm text-gray-700">
+          Create and manage collections of URLs to share with others.
+        </p>
+      </div>
+      <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
+        <a
+          href="/list/new"
+          class="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
+        >
+          Create New List
+        </a>
+      </div>
+    </div>
+
+    {lists.length === 0 ? (
+      <div class="mt-12 text-center">
+        <svg
+          class="mx-auto h-12 w-12 text-gray-400"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          aria-hidden="true"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"
+          />
+        </svg>
+        <h3 class="mt-2 text-sm font-medium text-gray-900">No lists</h3>
+        <p class="mt-1 text-sm text-gray-500">Get started by creating a new list.</p>
+        <div class="mt-6">
+          <a
+            href="/list/new"
+            class="inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+          >
+            Create New List
+          </a>
+        </div>
+      </div>
+    ) : (
+      <div class="mt-8 flex flex-col">
+        <div class="-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
+          <div class="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
+            <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+              <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 p-4">
+                {lists.map((list) => (
+                  <div class="relative rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="flex items-center justify-between">
+                      <a href={`/list/${list.slug}`} class="focus:outline-none w-full">
+                        <h3 class="text-lg font-medium text-gray-900 truncate">
+                          {list.title || 'Untitled List'}
+                        </h3>
+                        {list.description && (
+                          <p class="mt-1 text-sm text-gray-500 line-clamp-2">
+                            {list.description}
+                          </p>
+                        )}
+                        <div class="mt-2 flex items-center text-sm text-gray-500">
+                          <span>{list._count.links} links</span>
+                          <span class="mx-2">&middot;</span>
+                          <span>
+                            {list.createdAt
+                              ? new Date(list.createdAt).toLocaleDateString()
+                              : 'No date'}
+                          </span>
+                        </div>
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+  </div>
+</Layout>
